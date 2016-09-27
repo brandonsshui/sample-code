@@ -1,0 +1,684 @@
+﻿@model Sabio.Web.Models.ViewModels.ItemViewModel<int?>
+@{
+    ViewBag.Title = "Manage Events";
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+}
+
+<style>
+    #map-canvas {
+        width: 100%;
+        height: 250px;
+        background-color: #CCC;
+    }
+</style>
+
+<div data-ng-controller="eventsController as event">
+    <div class="content-heading">
+        <!-- START Language list-->
+        <div class="pull-right" ng-if="event.eventId">
+
+            <button type="button" class="btn btn-default btn-sm createEvent" ng-click="event.goToCreate()">Create Event</button>
+        </div>
+        <!-- END Language list    -->
+        Manage Event &nbsp;&nbsp;
+        <small>{{event.newEvent.title}}</small>
+    </div>
+    <hr />
+    <form class="form-horizontal" id="eventForm" name="event.eventForm" ng-submit="event.submit()" novalidate>
+
+        <!-- START panel-->
+        <div class="panel panel-default">
+            <div class="panel-heading">Basic Info</div>
+            <div class="panel-body">
+
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-lg-2 control-label">Event Title</label>
+                            <div class="col-lg-10">
+                                <input type="text" placeholder="Title" class="form-control"
+                                       ng-class="{'error': event.showNewEventErrors && !event.eventForm.title.$valid}"
+                                       name="title"
+                                       id="title"
+                                       ng-model="event.newEvent.title"
+                                       required>
+                                <div role="alert" class="help-inline error">
+                                    <span class="error" ng-show="event.showNewEventErrors && event.eventForm.title.$error.required">Title is required</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-lg-2 control-label">Start Date</label>
+                            <div class="col-lg-10">
+                                <div class="form-inline">
+                                    <input type="text" size="10" class="form-control" data-autoclose="1" placeholder="Date" bs-datepicker
+                                           ng-class="{'error': event.showNewEventErrors && !event.eventForm.start.$valid}"
+                                           name="start"
+                                           id="start"
+                                           ng-model="event.newEvent.start"
+                                           required>
+                                    <input type="text" size="10" class="form-control" data-time-format="h:mm:ss a" placeholder="Time" bs-timepicker
+                                           ng-class="{'error': event.showNewEventErrors && !event.eventForm.start.$valid}"
+                                           name="start"
+                                           id="start"
+                                           ng-model="event.newEvent.start"
+                                           required>
+                                </div>
+                                <div role="alert" class="help-inline error">
+                                    <span class="error" ng-show="event.showNewEventErrors && event.eventForm.start.$error.required">Start Date and Time is required</span>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="form-group">
+                            <label class="col-lg-2 control-label" for="tagPicker">Event Tags</label>
+                            <div class="col-lg-10">
+                                <select chosen
+                                        ng-model="event.newEvent.tags"
+                                        ng-options="option.id as option.tagName for option in event.tagInfo"
+                                        multiple></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+
+                        <div class="form-group">
+                            <label class="col-lg-2 control-label">Description</label>
+                            <div class="col-lg-10">
+                                <input type="text" placeholder="Description" class="form-control" ng-model="event.newEvent.description">
+                            </div>
+                        </div>
+
+
+                        <div class="form-group">
+                            <label class="col-lg-2 control-label">End Date</label>
+                            <div class="col-lg-10">
+                                <div class="form-inline">
+                                    <input type="text" size="10" class="form-control" data-autoclose="1" placeholder="Date" bs-datepicker
+                                           ng-class="{'error': event.showNewEventErrors && !event.eventForm.end.$valid}"
+                                           name="end"
+                                           id="end"
+                                           ng-model="event.newEvent.end"
+                                           required>
+                                    <input type="text" size="10" class="form-control" data-time-format="h:mm:ss a" placeholder="Time" bs-timepicker
+                                           ng-class="{'error': event.showNewEventErrors && !event.eventForm.end.$valid}"
+                                           name="end"
+                                           id="end"
+                                           ng-model="event.newEvent.end"
+                                           required>
+                                </div>
+
+                                <div role="alert" class="help-inline error">
+                                    <span class="error" ng-show="event.showNewEventErrors && event.eventForm.end.$error.required">End Date and Time is required</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-lg-2 control-label">Public Event?</label>
+                            <div class="col-lg-10">
+                                <div class="checkbox c-checkbox">
+                                    <label>
+                                        <input type="checkbox" ng-model="event.newEvent.isPublic">
+                                        <span class="fa fa-check"></span>This event is open to anyone
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+
+        <!-- END panel-->
+        <!-- START panel-->
+        <div class="panel panel-default">
+            <div class="panel-heading">Location</div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-lg-2 control-label">Address</label>
+                            <div class="col-lg-10">
+                                <input type="text" placeholder="Address" class="form-control"
+                                       ng-class="{'error': event.showNewEventErrors && !event.eventForm.address.$valid}"
+                                       name="address"
+                                       id="address"
+                                       ng-model="event.newEvent.location.address"
+                                       required>
+                                <div role="alert" class="help-inline error">
+                                    <span class="error" ng-show="event.showNewEventErrors && event.eventForm.address.$error.required">Address is required</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-lg-2 control-label">City</label>
+                            <div class="col-lg-10">
+                                <input type="text" placeholder="City" class="form-control"
+                                       ng-class="{'error': event.showNewEventErrors && !event.eventForm.location.city.$valid}"
+                                       name="city"
+                                       id="city"
+                                       ng-model="event.newEvent.location.city"
+                                       required>
+                                <div role="alert" class="help-inline error">
+                                    <span class="error" ng-show="event.showNewEventErrors && event.eventForm.city.$error.required">City is required</span>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="form-group">
+                            <label class="col-lg-2 control-label">State</label>
+                            <div class="col-lg-10">
+                                <input type="text" placeholder="State" class="form-control"
+                                       ng-class="{'error': event.showNewEventErrors && !event.eventForm.state.$valid}"
+                                       name="state"
+                                       id="state"
+                                       ng-model="event.newEvent.location.state"
+                                       required>
+                                <div role="alert" class="help-inline error">
+                                    <span class="error" ng-show="event.showNewEventErrors && event.eventForm.state.$error.required">State is required</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-lg-2 control-label">ZIP Code</label>
+                            <div class="col-lg-10">
+                                <input type="text" placeholder="Zip Code" class="form-control"
+                                       ng-class="{'error': event.showNewEventErrors && !event.eventForm.zipCode.$valid}"
+                                       name="zipcode"
+                                       id="zipcode"
+                                       ng-model="event.newEvent.location.zipCode"
+                                       required>
+                                <div role="alert" class="help-inline error">
+                                    <span class="error" ng-show="event.showNewEventErrors && event.eventForm.zipCode.$error.required">Zip Code is required</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-default btn-sm" ng-click="event.verifyLocation()">
+                            Verify Location
+                        </button><br />
+                        <small ng-if="!event.eventId">Location must be verified to submit</small>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div id="map-canvas"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- END panel-->
+        <!-- START panel-->
+        <div ng-if="event.eventId" class="panel panel-default">
+            <div class="panel-heading">Event Image</div>
+            <div class="panel-body">
+
+                <div class="row">
+                    <div class="col-sm-6">
+                        <img check-image ng-src="{{event.newEvent.media.fullUrl}}" height="400" width="400" alt="Upload a photo for your event" />
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="eventDropzone">
+                            <div class="dropzone" id="eventDropzone" action="/api/media/11"
+                                 method="post"
+                                 enctype="multipart/form-data"
+                                 ng-dropzone
+                                 dropzone="event.dropzone"
+                                 dropzone-config="event.dropzoneConfig"
+                                 event-handlers="{ 'addedfile': event.dzAddedFile, 'error': event.dzError }"></div>
+                        </div>
+
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <!-- END panel-->
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Submit Event</div>
+            <div class="panel-body">
+
+                <div class="row">
+                    <div class="col-sm-12">
+                        <button type="submit" id="cmdAddEvent" class="btn btn-success" ng-if="event.newEvent.location.lat">Add/Update Event</button>
+                        <button type="button" id="cmdDeleteEvent" class="btn btn-danger" ng-click="event.delete()">Delete</button>
+                        <button type="button" id="cmdCancel" class="btn btn-warning" ng-click="event.cancel()">Cancel</button>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </form>
+</div>
+
+@*<div ng-controller="eventManageController as vm">
+
+        <form id="eventForm" name="vm.eventForm" ng-submit="vm.addEvent()" novalidate>
+            <div class="form-group">
+                <label>Event Title</label>
+                <input type="text" class="form-control"
+                       ng-class="{'error': vm.showEventErrors && !vm.eventForm.title.$valid}"
+                       placeholder="Title"
+                       name="title"
+                       id="title"
+                       ng-model="vm.event.title"
+                       required>
+                <div role="alert" class="help-inline error">
+                    <span class="error" ng-show="vm.showEventErrors && vm.eventForm.title.$error.required">Title is required</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Event Description</label>
+                <input type="text" class="form-control"
+                       placeholder="Event Description"
+                       name="description"
+                       id="description"
+                       ng-model="vm.event.description"
+                       required>
+                <div role="alert" class="help-inline error">
+                    <span class="error" ng-show="vm.showEventErrors && vm.eventForm.description.$error.required">Description is required</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Start Date Time</label>
+                <input type='text' class="form-control"
+                       ng-class="{'error': vm.showEventErrors && !vm.eventForm.start.$valid}"
+                       placeholder="Start Date Time"
+                       name="start"
+                       id="start"
+                       ng-model="vm.event.start"
+                       required />
+                <div role="alert" class="help-inline error">
+                    <span class="error" ng-show="vm.showEventErrors && vm.eventForm.start.$error.required">Start Date/Time is required</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>End Date Time</label>
+                <input type='text' class="form-control"
+                       ng-class="{'error': vm.showEventErrors && !vm.eventForm.end.$valid}"
+                       placeholder="End Date Time"
+                       name="end"
+                       id="end"
+                       ng-model="vm.event.end"
+                       required />
+                <div role="alert" class="help-inline error">
+                    <span class="error" ng-show="vm.showEventErrors && vm.eventForm.end.$error.required">End Date/Time is required</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <strong class="isPublic">Public</strong>
+                <input type="checkbox" class="publicPrivate" name="isPublic" id="isPublic" placeholder="True/False" ng-model="vm.event.isPublic">
+            </div>
+            <div>
+                <strong class="eventType">Event Type</strong>
+                <select class="eventTypeNumber"
+                        name="eventType" id="eventType" ng-model="vm.event.eventType">
+                    <option value="1">Type 1</option>
+                    <option value="2">Type 2</option>
+                    <option value="3">Type 3</option>
+                </select>
+            </div>
+            <button type="submit" id="cmdAddEvent" class="btn btn-success">Add/Update Event</button>
+            <button type="button" id="cmdDeleteEvent" class="btn btn-danger" ng-click="vm.delete()">Delete</button>
+            <button type="button" id="cmdCancel" class="btn btn-warning" ng-click="vm.cancel()">Cancel</button>
+        </form>
+
+    </div>*@
+
+<input type="hidden" id="eventId" value="@Model.Item" />
+
+
+@section pageInitScripts{
+    <!-- For chosen start-->
+    <link rel="stylesheet" type="text/css" href="/Scripts/bower_components/chosen/chosen.css" />
+    <script src="/Scripts/bower_components/chosen/chosen.jquery.js"></script>
+    <script src="/Scripts/bower_components/angular-chosen-localytics/dist/angular-chosen.min.js"></script>
+    <script src="/Scripts/sabio/modules/sabio.module.angular-chosen.js"></script>
+    <!-- For chosen end-->
+    <!-- For angular strap start-->
+    <script src="~/Scripts/bower_components/angular-strap/dist/angular-strap.min.js"></script>
+    <script src="~/Scripts/bower_components/angular-strap/dist/angular-strap.tpl.min.js"></script>
+    <script src="~/Scripts/sabio/modules/sabio.module.angular-strap.js"></script>
+    <!-- For angular strap end-->
+
+    <script src="~/Scripts/bower_components/moment/min/moment.min.js"></script>
+    <script src="~/Scripts/bower_components/angular-moment/angular-moment.min.js"></script>
+    <script src="~/Scripts/sabio/modules/sabio.module.angular-moment.js"></script>
+
+    <!--DropZone start-->
+    <script src="/Scripts/bower_components/dropzone/dist/dropzone.js"></script>
+    <script src="/Scripts/bower_components/angular-dropzone/lib/angular-dropzone.js"></script>
+    <link href="/Scripts/bower_components/dropzone/downloads/css/dropzone.css" rel="stylesheet" />
+    <script src="~/Scripts/sabio/modules/sabio.module.dropzone.js"></script>
+    <!--DropZone end-->
+    <script src="~/Scripts/bower_components/moment/min/moment.min.js"></script>
+    <script src="~/Scripts/bower_components/angular-moment/angular-moment.min.js"></script>
+    <script src="~/Scripts/sabio/modules/sabio.module.angular-moment.js"></script>
+}
+
+@section scripts{
+    <script src="~/Scripts/sabio.services.events.js"></script>
+    <script src="~/Scripts/sabio.services.tags.js"></script>
+    <script src="//maps.googleapis.com/maps/api/js?key=AIzaSyC7D3_wXIH-aeBLeOG06Fw20i0lloRqTsM"></script>
+
+    <script type="text/javascript">
+        Dropzone.autoDiscover = false;
+        //Events service
+        (function () {
+            "use strict";
+
+            angular.module(APPNAME)
+                 .factory('$eventsService', EventsServiceFactory);
+
+            EventsServiceFactory.$inject = ['$baseService'];
+
+            function EventsServiceFactory($baseService) {
+
+                var aSabioServiceObject = sabio.services.events;
+
+                var newService = $baseService.merge(true, {}, aSabioServiceObject, $baseService);
+
+                return newService;
+            }
+        })();
+
+
+        //TAG SERVICE:
+        (function () {
+            "use strict";
+
+            angular.module(APPNAME)
+                .factory('$tagsService', tagsServiceFactory);
+
+            tagsServiceFactory.$inject = ['$baseService'];
+
+            function tagsServiceFactory($baseService) {
+
+                var aSabioServiceObject = sabio.services.tags;
+
+                var newService = $baseService.merge(true, {}, aSabioServiceObject, $baseService)
+
+                return newService;
+            }
+        })();
+
+
+        //controller
+        (function () {
+            "use strict";
+
+            angular.module(APPNAME)
+                .controller('eventsController', EventsController);
+
+            angular.module(APPNAME)
+                .config(function ($timepickerProvider) {
+                    angular.extend($timepickerProvider.defaults, {
+                        timeType: 'iso'
+                    });
+                })
+
+            EventsController.$inject = ['$scope', '$baseController', '$eventsService', '$tagsService'];
+
+            function EventsController(
+                $scope
+                , $baseController
+                , $eventsService
+                , $tagsService) {
+
+
+                var vm = this;
+                vm.eventForm = null;
+                vm.newEvent = {};
+                vm.newEvent.isPublic = true;
+                vm.showNewEventErrors = false;
+                vm.eventId = null;
+                vm.geocoder = null;
+                vm.map = null;
+                vm.addressId = null;
+                vm.geocodeResponse = null;
+                vm.address = {};
+                vm.tagInfo = null;
+
+                vm.time = null;
+                vm.sharedDate = null;
+
+
+                vm.$tagsService = $tagsService;
+                vm.$eventsService = $eventsService;
+                vm.$scope = $scope;
+
+                vm.receiveItems = _receiveItems;
+                vm.onEmpError = _onEmpError;
+                vm.cancel = _cancel;
+                vm.delete = _delete;
+                vm.submit = _submit;
+                vm.ajaxSuccess = _ajaxSuccess;
+                vm.ajaxFail = _ajaxFail;
+                vm.goToCreate = _goToCreate;
+                vm.verifyLocation = _verifyLocation;
+                vm.codeAddress = _codeAddress;
+                vm.getTags = _getTags;
+                vm.getTagsSuccess = _getTagsSuccess;
+                vm.getTagsError = _getTagsError;
+                vm.dzAddedFile = _dzAddedFile;
+                vm.dzError = _dzError;
+
+                $baseController.merge(vm, $baseController);
+
+                vm.notify = vm.$eventsService.getNotifier($scope);
+
+                render();
+
+                function render() {
+                    vm.geocoder = new google.maps.Geocoder();
+                    var latlng = new google.maps.LatLng(-34.397, 150.644);
+                    var mapOptions = {
+                        zoom: 8,
+                        center: latlng
+                    }
+                    vm.map = new google.maps.Map($('#map-canvas')[0], mapOptions);
+                    vm.eventId = $('#eventId').val();
+                    if (vm.eventId) {
+                        vm.$eventsService.getById(vm.eventId, vm.receiveItems, vm.onEmpError);
+                    }
+                    vm.getTags();
+                    console.log('eventId: ', vm.eventId);
+                }
+
+
+                function _receiveItems(data) {
+
+                    vm.notify(function () {
+                        vm.newEvent = data.item;
+                        if (vm.newEvent.tags != null) {
+                            var tags = [];
+                            for (var i = 0; i < vm.newEvent.tags.length; i++) {
+                                tags.push(vm.newEvent.tags[i].id);
+                            }
+                            vm.newEvent.tags = tags;
+                        }
+                        vm.verifyLocation();
+                    });
+                }
+
+
+                function _onEmpError(jqXhr, error) {
+                    console.error(error);
+                    vm.goToCreate();
+
+                }
+
+
+                function _goToCreate() {
+                    window.location.replace("//ink.dev/events/create");
+                }
+
+
+                function _cancel() {
+                    vm.eventForm.$setPristine();
+                    vm.eventForm.$setUntouched();
+                    console.log('cancel pushed');
+                }
+
+
+                function _delete() {
+                    var youSure = confirm('Are you sure you want to delete?');
+                    if (youSure) {
+                        vm.$eventsService.delete(eventId, vm.ajaxSuccess, vm.ajaxFail);
+                    } else {
+                        return false;
+                    }
+                }
+
+
+                function _ajaxSuccess() {
+                    console.log('ajax success')
+                }
+
+
+                function _ajaxFail() {
+                    console.log('ajax fail')
+                }
+
+
+                function _submit() {
+                    vm.showNewEventErrors = true;
+
+                    if (vm.eventId.length == 0) {
+                        if (vm.eventForm.$valid) {
+                            vm.$eventsService.insertNewEvent(vm.newEvent, vm.ajaxSuccess, vm.ajaxFail);
+                            console.log('post fired');
+                        }
+                        else {
+                            console.log("form submitted with invalid data :(");
+                        }
+                    } else {
+                        var payload = vm.newEvent;
+                        payload.Id = vm.eventId;
+
+                        var start = vm.newEvent.start;
+                        vm.newEvent.start = moment.utc(start).format("YYYY-MM-DDTHH:mm:ss");
+                        console.log('start: ', vm.newEvent.start);
+
+                        var end = vm.newEvent.end;
+                        vm.newEvent.end = moment.utc(end).format("YYYY-MM-DDTHH:mm:ss");
+                        console.log('end: ', vm.newEvent.end);
+
+                        vm.$eventsService.updateEvent(vm.eventId, payload, vm.ajaxSuccess, vm.ajaxFail);
+                        console.log('put fired');
+                    }
+
+
+                }
+
+                //geolocation functions
+                function _verifyLocation() {
+
+                    var addressString = vm.newEvent.location.address + " " + vm.newEvent.location.city + " " + vm.newEvent.location.state + " " + vm.newEvent.location.zipCode;
+
+                    vm.codeAddress(addressString);
+                }
+
+
+                function _codeAddress(address) {
+
+
+                    vm.geocoder.geocode({ 'address': address }, _onCodeAddress);
+                }
+
+
+                function _onCodeAddress(results, status) {
+                    vm.notify(function () {
+                        vm.geocodeResponse = JSON.stringify(results, null, "     ");
+                    });
+
+                    if (status == google.maps.GeocoderStatus.OK) {
+
+                        var geometry = results[0].geometry;
+                        var loc = geometry.location;
+
+                        console.log("got location data from API", loc);
+
+                        vm.map.setCenter(loc);
+
+                        var marker = new google.maps.Marker({
+                            map: vm.map,
+                            position: loc
+                        });
+
+                        if (geometry.viewport)
+                            vm.map.fitBounds(geometry.viewport);
+
+                        var lat = loc.lat();
+                        var lon = loc.lng();
+
+                        console.log("found coordinates in reply -> (%s, %s)", lat, lon);
+
+                        vm.notify(function () {
+                            vm.newEvent.location.lat = lat;
+                            vm.newEvent.location.lng = lon;
+                        });
+
+
+                    } else {
+                        alert('Geocode was not successful for the following reason: ' + status);
+                    }
+                }
+
+
+                //TAGS GET ALL:
+                function _getTags() {
+                    vm.$tagsService.getTagsData(vm.getTagsSuccess, vm.getTagsError);
+                };
+
+
+                function _getTagsSuccess(info) {
+                    vm.notify(function () {
+                        vm.tagInfo = info.items;
+                    });
+                };
+
+
+                function _getTagsError(jqXhr, error) {
+                    console.error(error);
+                };
+
+                //dropzone functions
+                vm.dropzoneConfig = {
+                    parallelUploads: 3,
+                    maxFileSize: 30,
+                    "success": function (file, data) {
+                        vm.newEvent.mediaId = data.item;
+                        vm.isResultsLoaded = true;
+                        console.log('vm.newEvent', vm.newEvent)
+                        vm.$eventsService.updateEventMedia(vm.eventId, vm.newEvent, vm.dzAddedFile, vm.dzError)
+                    }
+                };
+
+                function _dzAddedFile() {
+                    console.log('_dzAddedFile');
+                };
+
+                function _dzError(errorMessage) {
+                    console.log(errorMessage);
+                };
+            }
+        })();
+    </script>
+}

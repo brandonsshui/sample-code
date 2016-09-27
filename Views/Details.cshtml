@@ -1,0 +1,176 @@
+﻿@model Sabio.Web.Models.ViewModels.ItemViewModel<int?>
+
+@{
+    ViewBag.Title = "Event Details";
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+}
+
+<style>
+    #map-canvas {
+        width: 100%;
+        height: 250px;
+        background-color: #CCC;
+    }
+
+    .nopadding {
+        padding: 0px !important;
+    }
+
+    .maxwidth {
+        width: 100%;
+    }
+</style>
+
+<div ng-controller="eventDetailsController as dashboard" id="eventCtrler">
+    <div class="row">
+        <div class="col-lg-6">
+            <!-- START widget-->
+            <div style="background-image: url({{dashboard.item.media.fullUrl}})" class="bg-cover">
+                <div class="p-xl text-center text-white">
+                    <h1 class="m0">{{dashboard.item.title}}</h1>
+                    <h2>Date and time: {{dashboard.item.start | date:"MMM d, y 'at' h:mma"}} - {{dashboard.item.end | date:" MMM d, y 'at' h:mma"}}</h2>
+                    <h3>{{dashboard.item.description}}</h3>
+                </div>
+            </div>
+            <div class="text-center bg-gray-dark p-lg mb-xl row row-table nopadding">
+
+                <div class="col-xs-4 br nopadding">
+                    <br />
+                    <h3 class="m0">{{dashboard.item.countYes}}</h3>
+                    <p class="m0">Attending</p>
+                    <br />
+                    <button class="btn btn-default maxwidth" ng-click="dashboard.rsvp(1)">Attend</button>
+                </div>
+                <div class="col-xs-4 br nopadding">
+                    <br />
+                    <h3 class="m0">{{dashboard.item.countMaybe}}</h3>
+                    <p class="m0">Maybe</p>
+                    <br />
+                    <button class="btn btn-default maxwidth" ng-click="dashboard.rsvp(3)">Maybe Attend</button>
+                </div>
+                <div class="col-xs-4 br nopadding">
+                    <br />
+                    <h3 class="m0">{{dashboard.item.countNo}}</h3>
+                    <p class="m0">Not Attending</p>
+                    <br />
+                    <button class="btn btn-default maxwidth" ng-click="dashboard.rsvp(2)">Cannot Attend</button>
+                </div>
+            </div>
+
+            <!--Event Map-->
+            <!-- Event Location Tab Start-->
+            <div id="eventLocation" role="tabpanel" class="tab-pane">
+                <div id="eventLocation" role="tabpanel" class="tab-pane">
+                    <div class="row">
+                        <div id="map-canvas"></div>
+                    </div>
+                    <div class="row text-md text-white">
+                        {{dashboard.item.location.address}}
+                        {{dashboard.item.location.city}}, {{dashboard.item.location.state}} {{dashboard.item.location.zipCode}}
+                    </div>
+
+                </div>
+            </div>
+            <!-- Event Location Tab End-->
+            <!-- Event Info Tab Start-->
+            <div id="eventInfo" class="text-md text-white">
+                <div>
+                    <h1>Event Details</h1>
+                    <h2>Title: {{dashboard.item.title}}</h2>
+                    <h3>Start time: {{dashboard.item.start | date:"MMM d, y 'at' h:mma"}}</h3>
+                    <h3>End time: {{dashboard.item.end | date:" MMM d, y 'at' h:mma"}}</h3>
+                    <h3>{{dashboard.item.description}}</h3>
+                    <br />
+                    <p>Event created by {{dashboard.item.organizer.profileName}} {{dashboard.item.organizer.profileLastName}}</p>
+                    <p>on {{dashboard.item.createDate}}</p>
+                    <p>This is a public event? {{dashboard.item.isPublic}}</p>
+                    <p> Event tagged as:&emsp;<span ng-if="!dashboard.item.tags">No Tags</span><span ng-repeat="tag in dashboard.item.tags">{{tag.tagName}}&emsp;</span></p>
+                    <br />
+                    <p>Last modified at {{dashboard.item.modifiedDate}}</p>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-lg-6">
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="panel-title text-center">{{dashboard.selectedTab.label}}</div>
+                </div>
+                <div class="panel-body text-center">
+                    <ul class="nav nav-tabs">
+                        <li ng-class="dashboard.tabClass(tab)" ng-repeat="tab in dashboard.tabs">
+                            <a href="{{tab.link}}" ng-click="dashboard.setSelectedTab(tab)">{{tab.label}}</a>
+                        </li>
+                    </ul>
+
+                    <div ng-view></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+
+
+
+
+<input type="hidden" id="userIdFromModel" value="@Model.Item" />
+
+@section pageInitScripts{
+    <!-- For chosen start-->
+    <link rel="stylesheet" type="text/css" href="/Scripts/bower_components/chosen/chosen.css" />
+    <script src="/Scripts/bower_components/chosen/chosen.jquery.js"></script>
+    <script src="/Scripts/bower_components/angular-chosen-localytics/dist/angular-chosen.min.js"></script>
+    <script src="/Scripts/sabio/modules/sabio.module.angular-chosen.js"></script>
+    <!-- For chosen end-->
+}
+
+@section scripts
+{
+    <!-- For normal scripts -->
+    <script src="/Scripts/sabio.services.users.js"></script>
+    <script src="/Scripts/sabio.services.events.js"></script>
+    <script src="/Scripts/sabio.services.userEvents.js"></script>
+    <script src="/Scripts/sabio.services.connections.js"></script>
+    <script src="/Scripts/sabio.services.eventInvites.js"></script>
+    <script src="~/Scripts/sabio.services.messagethreads.js"></script>
+    <script src="~/Scripts/sabio.services.discussion.js"></script>
+
+    <!-- For angular module-->
+    <script src="/Scripts/sabio/app/services/eventService.js"></script>
+    <script src="/Scripts/sabio/app/services/usersService.js"></script>
+    <script src="/Scripts/sabio/app/services/userEventsService.js"></script>
+    <script src="/Scripts/sabio/app/services/connectionsService.js"></script>
+    <script src="/Scripts/sabio/app/services/eventInvitesService.js"></script>
+    <script src="~/Scripts/sabio/app/services/discussionThreadsService.js"></script>
+    <script src="~/Scripts/sabio/app/services/discussionService.js"></script>
+
+    <!--angular controller-->
+    <script src="~/Scripts/sabio/app/eventDetails/controllers/attendees.js"></script>
+    <script src="~/Scripts/sabio/app/eventDetails/controllers/discussionThreads.js"></script>
+    <script src="~/Scripts/sabio/app/eventDetails/controllers/eventDetails.js"></script>
+    <script src="~/Scripts/sabio/app/eventDetails/controllers/discussionThreads.js"></script>
+    <script src="~/Scripts/sabio/app/eventDetails/controllers/discussion.js"></script>
+
+
+    <!--config file-->
+    <script src="~/Scripts/sabio/app/eventDetails/eventDetails.config.js"></script>
+
+    <script src="//maps.googleapis.com/maps/api/js?key=AIzaSyC7D3_wXIH-aeBLeOG06Fw20i0lloRqTsM"></script>
+
+
+    <script type="text/javascript">
+
+
+
+
+
+
+
+    </script>
+}
